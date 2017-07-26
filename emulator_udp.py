@@ -8,7 +8,9 @@ import time
 import sys
 
 from proto import BUTTON_IDS, BUTTON_NAMES, button_bit
-from proto.udp import MacAddress, ScanPacket, StatusPacket
+from proto.udp import MacAddress, ScanRequestPacket, ScanPacket, StatusPacket, LightsPacket, LightsRssiPacket
+
+from common import colors
 
 
 class StoppedException(Exception):
@@ -27,15 +29,16 @@ class Badge:
             for _ in range(random.randint(0, 47))
         ]
 
-    def __init__(self, version=1, mac=None, server_host='magbadge.me', server_port=8000):
+    def __init__(self, version=1, mac=None, server_host='magbadge.me', server_port=8000, receive=False):
         self.server_host = server_host
         self.server_port = server_port
         self.mac = MacAddress(mac) if mac else Badge.random_mac()
 
+        self._receive = receive
+        self._recv_thread = None
+
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        # TODO: Handle incoming light packets, and also figure out a way to display them
-        #self.sock.bind(('0.0.0.0', 8001))
 
         self.version = version
         self._rssi = -128
@@ -48,6 +51,7 @@ class Badge:
         self.update_id = 0
         self.heap_free = 65535
         self.sleep_performance = 255
+        self.scan_pending = False
 
         self.running = False
 
@@ -127,31 +131,81 @@ class Badge:
         else:
             time.sleep(length)
 
+    def on_lights(self, packet):
+        if packet.matches_mac(self.mac):
+            color_names = [colors.color_name(colors.Color(c).rgb) for c in packet.colors]
+            print("{!s}: LIGHTS [{:^11s}] [{:^11s}] [{:^11s}] [{:^11s}]".format(self.mac, *color_names))
+
+    def on_scan_request(self):
+        self.scan_pending = True
+
+    def on_lights_rssi(self, packet):
+        pass
+
+    def listen(self):
+        self.sock.bind(('0.0.0.0', 8001))
+        self.sock.settimeout(10)
+
+        buf = bytearray(1024)
+        while self.running:
+            try:
+                count = self.sock.recv_into(buf, 1024)
+
+                if count >= 7:
+                    mac = buf[0:6]
+                    kind = buf[6]
+                    rest = buf[6:count]
+
+                    if bytes(self.mac) != mac:
+                        continue
+
+                    if kind == LightsPacket.ID:
+                        self.on_lights(LightsPacket.from_bytes(rest))
+                    elif kind == ScanRequestPacket.ID:
+                        self.on_scan_request()
+                    elif kind == LightsRssiPacket.ID:
+                        self.on_lights_rssi(LightsRssiPacket.from_bytes(rest))
+                else:
+                    print("Discarding invalid packet")
+            except socket.timeout:
+                # This is fine
+                pass
+
     def run(self):
         self.running = True
+
+        if self._receive:
+            self._recv_thread = threading.Thread(target=self.listen)
+            self._recv_thread.start()
 
         self.send_update()
 
         try:
-            self.sleep(random.randrange(60))
-            print("Initialized badge {!s}".format(self.mac))
+            #self.sleep(random.randrange(30))
+            print("{!s}: Initialized".format(self.mac))
 
             while self.running:
-                for _ in range(6):
-                    self.send_update()
-                    self.sleep(5)
-                    if random.randrange(5) > 2:
-                        button = random.choice(list(BUTTON_NAMES.values()))
-                        self.button_press(button)
-                        self.sleep(.5)
-                        self.button_release(button)
-                        self.sleep(4.5)
-                    else:
-                        self.sleep(5)
+                self.send_update()
+                #self.sleep(5)
 
-                self.send_scan()
+                if self.scan_pending:
+                    self.send_scan()
+                    self.scan_pending = False
+
+                if random.randrange(5) > 2:
+                    button = random.choice(list(BUTTON_NAMES.values()))
+                    self.button_press(button)
+                    self.sleep(.5)
+                    self.button_release(button)
+                    self.sleep(4.5)
+                else:
+                    self.sleep(5)
+
         except StoppedException:
-            return
+            pass
+
+        if self._recv_thread:
+            self._recv_thread.join()
 
 
 if __name__ == "__main__":
@@ -163,9 +217,13 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         random.seed(int(sys.argv[2]))
 
+    receive = False
+    if len(sys.argv) > 3:
+        receive = True
+
     print("Simulating {} badges!".format(badge_count))
 
-    badges = [Badge(version=1) for _ in range(badge_count)]
+    badges = [Badge(version=1, receive=receive) for _ in range(badge_count)]
     threads = [threading.Thread(target=b.run) for b in badges]
 
     for thread in threads:
