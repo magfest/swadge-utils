@@ -1,5 +1,5 @@
-from . import udp
-from . import wamp
+VERSION_2017_PRIME = 0
+VERSION_2017_LABS = 1
 
 BUTTON_RIGHT = 1
 BUTTON_DOWN = 2
