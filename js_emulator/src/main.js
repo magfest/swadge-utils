@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import VueRouter from 'vue-router'
 import VueWamp from 'vue-wamp'
+import VueCookies from 'vue-cookies'
 import Home from './Home.vue'
 
 Vue.use(VueWamp, {
@@ -22,6 +23,8 @@ Vue.use(VueWamp, {
 });
 
 Vue.use(VueRouter);
+
+Vue.use(VueCookies);
 
 const routes = [{
     path: '/',

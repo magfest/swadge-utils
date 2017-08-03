@@ -32,7 +32,7 @@
                  {r: 128, g: 192, b: 255},
                  {r: 128, g: 192, b: 255},
                  {r: 128, g: 192, b: 255}],
-        mac: Math.floor(Math.random() * (0xffffffffffff - 0x010000000000) + 0x010000000000),
+        mac: 0,
         text: '',
         show_screen: false,
         update_id: 0,
@@ -40,6 +40,13 @@
     },
     mounted() {
       var self = this;
+
+      var mac = this.$cookies.get('badge_mac');
+      if (!mac) {
+        mac = Math.floor(Math.random() * (0xffffffffffff - 0x010000000000) + 0x010000000000);
+	this.$cookies.set('badge_mac', mac, -1);
+      }
+      this.mac = mac;
 
       this.$wamp.subscribe('badge.' + this.mac + '.lights_static', function(args, kwargs, details) {
         self.setLights(args);
