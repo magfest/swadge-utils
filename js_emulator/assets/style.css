@@ -1,0 +1,102 @@
+.swadge {
+    position: relative;
+    width: 350px;
+    height: 590px;
+    background-image: url('swadge.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+button {
+    margin: 5px;
+    position: absolute;
+}
+
+.btn-select {
+    left: 28%;
+    bottom: 2.8%;
+}
+
+.btn-start {
+    right: 30%;
+    bottom: 2.8%;
+}
+
+.btn-up {
+    left: 27%;
+    top: 63%;
+}
+
+.btn-left {
+    left: 14%;
+    top: 70.25%;
+}
+
+.btn-right {
+    left: 42%;
+    top: 70.25%;
+}
+
+.btn-down {
+    left: 27%;
+    top: 77.5%;
+}
+
+.btn-a {
+    right: 19%;
+    top: 64.25%;
+}
+
+.btn-b {
+    right: 24.25%;
+    top: 76.25%;
+}
+
+.light {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    border-radius: 10px;
+    position: absolute;
+}
+
+.swadge .light:nth-child(1) {
+    left: 26.9%;
+    top: 1.3%;
+}
+
+.swadge .light:nth-child(2) {
+    right: 28%;
+    top: 1.3%;
+}
+
+.swadge .light:nth-child(3) {
+    right: 17.3%;
+    top: 58%;
+}
+
+.swadge .light:nth-child(4) {
+    left: 16%;
+    top: 58%;
+}
+
+.swadge-mac {
+    position: absolute;
+    left: 30%;
+    top: 8%;
+}
+
+.swadge-screen-text {
+    position: absolute;
+    top: 14%;
+    left: 30%;
+    width: 39%;
+    background: black;
+    color: green;
+    font-family: monospace, sans-serif;
+}
+
+.swadge-controls {
+    position: absolute;
+    left: 100%;
+}
