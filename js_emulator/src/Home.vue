@@ -38,6 +38,10 @@
         update_id: 0,
       };
     },
+    created: function() {
+      eventHub.$on('key_press', this.onKeyDown);
+      eventHub.$on('key_release', this.onKeyUp);
+    },
     mounted() {
       var self = this;
 
@@ -57,6 +61,12 @@
       }, {}).then(function(s) {console.log("got it text", s);});
     },
     methods: {
+      onKeyDown: function(evt) {
+        this.onButton(evt);
+      },
+      onKeyUp: function(evt) {
+        this.onButtonUp(evt);
+      },
       setLights: function(lights) {
           console.log(lights);
           for (var i in lights) {
@@ -71,18 +81,10 @@
           this.text = text;
       },
       onButton: function(b) {
-          console.log(this.show_screen);
-          console.log(b);
-          console.log(this.mac);
           this.$wamp.publish('badge_sim.button.press', [b], {update_id: this.update_id++, badge_id: this.mac});
       },
       onButtonUp: function(b) {
-          console.log(b, "UP");
           this.$wamp.publish('badge_sim.button.release', [b], {update_id: this.update_id++, badge_id: this.mac});
-      },
-      onLights: function(args, kwargs) {
-          console.log(args);
-          console.log(kwargs);
       }
     }
   }
