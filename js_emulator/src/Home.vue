@@ -57,7 +57,7 @@
       }, {}).then(function(s) {console.log("got it", s);});
 
       this.$wamp.subscribe('badge.' + this.mac + '.text', function(args, kwargs, details) {
-        self.setText(args[0]);
+        self.setText(args[2]);
       }, {}).then(function(s) {console.log("got it text", s);});
     },
     methods: {
